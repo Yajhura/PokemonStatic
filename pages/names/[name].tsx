@@ -9,6 +9,7 @@ import { Grid } from "@nextui-org/react";
 import PokemonUI from "../../components/pokemon/PokemonUI";
 import PokeDetails from "../../components/pokemon/PokeDetails";
 import { Pokemon } from "../../types/Pokemon";
+import { getPokemonInfo } from "../../utils/getPokeinfo";
 
 interface Props {
   pokemon: Pokemon;
@@ -56,18 +57,28 @@ export const getStaticPaths: GetStaticPaths = async (ctx) => {
 
   return {
     paths,
-    fallback: false,
+    fallback: "blocking",
   };
 };
 
 export const getStaticProps: GetStaticProps = async ({ params }) => {
   const { name } = params as { name: string };
-  const pokemon = await axios.get<Pokemon>(
-    `https://pokeapi.co/api/v2/pokemon/${name}`
-  );
+
+  const pokemon = await getPokemonInfo(name);
+  
+  if (!pokemon) {
+    return {
+      redirect: {
+        destination: "/",
+        permanent: false,
+      },
+    };
+  }
+
   return {
     props: {
-      pokemon: pokemon.data,
+      pokemon: pokemon,
+     
     },
   };
 };

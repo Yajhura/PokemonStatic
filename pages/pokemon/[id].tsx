@@ -1,14 +1,11 @@
-import { Button, Grid } from "@nextui-org/react";
-import { NextPage, GetStaticProps, GetStaticPaths } from "next";
+import { Grid } from "@nextui-org/react";
+import { GetStaticProps, GetStaticPaths } from "next";
 import { Layout } from "../../components/layout/Layout";
 import PokemonUI from "../../components/pokemon/PokemonUI";
 import { Pokemon } from "../../types/Pokemon";
 import PokeDetails from "../../components/pokemon/PokeDetails";
 import pokeApi from "../../Api/pokeApi";
-import ButtonLeft from "../../components/ui/ButtonsLeft";
-import { ButtonRigth } from "../../components/ui/ButtonRight";
-import { useRouter } from "next/router";
-import { AiOutlineCaretRight } from "react-icons/ai";
+import { getPokemonInfo } from "../../utils/getPokeinfo";
 
 interface Props {
   pokemon: Pokemon;
@@ -16,7 +13,7 @@ interface Props {
 
 const pokemonPage = ({ pokemon }: Props) => {
   //save array in localStorage
- 
+
   return (
     <>
       <Layout title={pokemon.name}>
@@ -48,19 +45,29 @@ export const getStaticPaths: GetStaticPaths = async (ctx) => {
     paths: pokemons151.map((id) => ({
       params: { id },
     })),
-    fallback: false,
+    fallback: "blocking",
   };
 };
 
 export const getStaticProps: GetStaticProps = async ({ params }) => {
   const { id } = params as { id: string };
 
-  const { data } = await pokeApi.get<Pokemon>(`/pokemon/${id}`);
+  const pokemon = await getPokemonInfo(id);
+
+  if (!pokemon) {
+    return {
+      redirect: {
+        destination: "/",
+        permanent: false,
+      },
+    };
+  }
 
   return {
     props: {
-      pokemon: data,
+      pokemon,
     },
+    revalidate: 60 * 60 * 24,
   };
 };
 
